@@ -208,10 +208,25 @@ namespace MasterServerToolkit.MasterServer
 
             /************************************************************************/
             // Path to executable
-            var executablePath = data.UseOverrideExePath ? data.OverrideExePath : SpawnSettings.ExecutablePath;
+            var executablePath = SpawnSettings.ExecutablePath;
 
-            if (!File.Exists(executablePath))
-                throw new FileNotFoundException($"Room executable not found at {executablePath}");
+            if (string.IsNullOrEmpty(executablePath))
+            {
+                executablePath = File.Exists(Environment.GetCommandLineArgs()[0])
+                    ? Environment.GetCommandLineArgs()[0]
+                    : Process.GetCurrentProcess().MainModule.FileName;
+            }
+
+            // In case a path is provided with the request
+            if (data.Options.Has(Mst.Args.Names.RoomExecutablePath))
+            {
+                executablePath = data.Options.AsString(Mst.Args.Names.RoomExecutablePath);
+            }
+
+            if (!string.IsNullOrEmpty(data.OverrideExePath))
+            {
+                executablePath = data.OverrideExePath;
+            }
 
             /// Create info about starting process
             var startProcessInfo = new ProcessStartInfo(executablePath)
